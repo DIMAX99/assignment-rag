@@ -8,15 +8,8 @@ The project is split into a Next.js frontend and a FastAPI backend powered by La
 
 Add the application output screenshot here after saving it in the repository, for example at `docs/images/output-example.png`.
 
-```md
-![Study Assistant output example](docs/images/output-example.png)
-```
+<img width="1913" height="958" alt="Screenshot 2026-06-20 195913" src="https://github.com/user-attachments/assets/5c374b92-77e2-4883-aae7-97f72acc3dbc" />
 
-<!-- Screenshot placeholder:
-
-![Study Assistant output example](docs/images/output-example.png)
-
--->
 
 ## Features
 
