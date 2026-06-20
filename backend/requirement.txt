@@ -1,0 +1,41 @@
+# FastAPI and Web Framework
+fastapi
+uvicorn[standard]
+python-dotenv
+
+# LangChain Core Dependencies
+langchain
+langchain-core
+langchain-google-genai
+langchain-postgres
+langchain-huggingface
+langchain-text-splitters
+
+# LangGraph
+langgraph
+
+# Database and Vector Store
+psycopg2-binary
+sqlalchemy
+
+# Document Processing
+docling
+markdownify
+
+# HTTP and External APIs
+httpx
+requests
+
+# API Clients
+supabase
+tavily-python
+
+# Data Processing
+pydantic
+pydantic-core
+
+# PDF and Document Processing
+pypdf
+
+# Utilities
+aiohttp
