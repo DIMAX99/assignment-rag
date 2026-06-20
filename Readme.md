@@ -2,6 +2,8 @@
 
 Study Assistant is a full-stack multimodal RAG application for biology learning. Students can ask biology questions, upload an image such as a textbook diagram, and receive a grounded answer using retrieved textbook context. If the textbook retrieval is weak, the backend can fall back to curated web search results.
 
+# DUE TO IMAGE INPUT AND INPUT LIMIT THE OUTPUT TAKES SOME EXTRA MINUTES
+
 The project is split into a Next.js frontend and a FastAPI backend powered by LangGraph, LangChain, Google Generative AI, Supabase Storage, Supabase Postgres/PGVector, and Tavily.
 
 ## Output Example
