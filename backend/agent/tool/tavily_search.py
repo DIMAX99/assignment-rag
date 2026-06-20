@@ -5,10 +5,14 @@ from dotenv import load_dotenv
 
 load_dotenv() 
 
-client = TavilyClient(api_key=os.getenv("TAVILY_API_KEY"))
+def get_tavily_client():
+    api_key = os.getenv("TAVILY_API_KEY")
+    if not api_key:
+        raise ValueError("Environment variable 'TAVILY_API_KEY' is not set")
+    return TavilyClient(api_key=api_key)
 
 def search_biology_web(query: str) -> str:
-    results = client.search(
+    results = get_tavily_client().search(
         query=query,
         search_depth="basic",
         max_results=3,
