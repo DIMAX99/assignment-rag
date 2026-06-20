@@ -5,9 +5,10 @@ from langchain_core.messages import HumanMessage
 
 from agent.state import AgentState
 from model.query_model import get_gemini_model
-from server.service.image_loader import download_image_from_url
+from agent.utils.image_loader import download_image_from_url
 from db.db import get_vector_store
 from model.embedding_model import get_google_embedding
+from agent.utils.extract_text import extract_text
 
 async def analyze_image_node(state: AgentState):
     if not state.image_url:
@@ -51,8 +52,10 @@ If the image contains text, labels, diagrams, charts, tables, textbook content, 
 
     response = await model.ainvoke([message])
 
+    image_summary = extract_text(response.content)
+
     return {
-        "image_summary": response.content
+        "image_summary": image_summary
     }
 
 async def build_query_node(state: AgentState):
@@ -62,19 +65,37 @@ async def build_query_node(state: AgentState):
     model = get_gemini_model()
 
     prompt = f"""
-Given a user's question and an image summary, generate a concise search query (1-2 sentences max) to retrieve relevant textbook content.
+You are creating a retrieval query for a textbook RAG system.
 
-User question: {state.question}
-Image summary: {state.image_summary}
+Your job is to convert the user's question and the image summary into a clear, concise, search-friendly query that will retrieve the most relevant textbook chunks from a vector database.
 
-Return only the search query, nothing else.
+Focus on:
+- the main concept being asked about
+- important scientific/technical terms
+- labels, objects, diagrams, processes, or relationships mentioned in the image
+- the user's actual intent
+
+Avoid:
+- unnecessary explanation
+- conversational wording
+- phrases like "the user wants to know"
+- adding facts that are not present in the question or image summary
+
+User question:
+{state.question}
+
+Image summary:
+{state.image_summary if state.image_summary else "No image was provided."}
+
+Return only the search query.
 """
 
     message = HumanMessage(content=prompt)
     response = await model.ainvoke([message])
+    search_query = extract_text(response.content)
 
     return {
-        "search_query": response.content.strip()
+        "search_query": search_query
     }
 async def retrieve_node(state: AgentState):
     vector_store = get_vector_store()
@@ -119,27 +140,46 @@ async def answer_node(state: AgentState):
     model = get_gemini_model()
 
     prompt = f"""
-You are a helpful study assistant. Answer the student's question using the retrieved textbook context.
+You are a helpful study assistant for a textbook-based RAG chatbot.
 
-Question:
+Your task is to answer the student's question using only:
+1. The retrieved textbook context
+2. The image summary, if an image was provided
+
+You must not use outside knowledge unless it is directly supported by the retrieved context or image summary.
+
+Student question:
 {state.question}
 
-{"Image Summary:" + state.image_summary if state.image_summary else ""}
+Image summary:
+{state.image_summary if state.image_summary else "No image was provided."}
 
-Retrieved Context:
+Retrieved textbook context:
 {state.retrieved_context}
 
-Instructions:
-- Answer clearly and concisely based on the context provided.
-- If the context doesn't contain enough information, say "Information not found."
-- Do not make up information.
-"""
+Answering rules:
+- Give a clear, student-friendly explanation.
+- Use the retrieved textbook context as the main source of truth.
+- If the image summary is relevant, connect it to the textbook context.
+- If the image summary is not relevant, ignore it.
+- Do not invent facts, definitions, examples, page numbers, or source names.
+- If the retrieved context does not contain enough information to answer the question, respond exactly with:
+Information not found.
+- Keep the answer concise but complete.
+- Use simple language unless the textbook context requires technical terms.
+- Do not mention that you are an AI model.
+- Do not say "based on the context" repeatedly.
 
+Final answer:
+"""
     message = HumanMessage(content=prompt)
     response = await model.ainvoke([message])
 
+    
+    final_text = extract_text(response.content)
+
     return {
-        "final_answer": response.content
+        "final_answer": final_text
     }
 def build_graph():
     graph = StateGraph(AgentState)

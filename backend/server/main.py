@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, HttpUrl
 from typing import Optional
 from uuid import uuid4
-from server.service.image_loader import download_image_from_url
+from agent.graph import app_graph
 
 app = FastAPI(title="Multimodal RAG Backend")
 
@@ -46,24 +46,10 @@ async def chat(req: ChatRequest):
             detail="Message cannot be empty"
         )
 
-    session_id = req.session_id or str(uuid4())
+    # session_id = req.session_id or str(uuid4())
 
-    image_info = None
-
-    if req.image_url:
-        downloaded = await download_image_from_url(req.image_url)
-
-        image_info = {
-            "content_type": downloaded["content_type"],
-            "size_bytes": downloaded["size"],
-        }
-
-    return {
-        "status": "received",
-        "session_id": session_id,
-        "message": req.message,
-        "image_url": req.image_url,
-        "image_path": req.image_path,
-        "has_image": req.image_url is not None,
-        "image_info": image_info,
-    }
+    result = await app_graph.ainvoke({
+        "question": req.message,
+        "image_url": req.image_url
+    })
+    return result["final_answer"]
