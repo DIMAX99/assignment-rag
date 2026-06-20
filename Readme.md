@@ -20,6 +20,8 @@ DATABASE VIEW containing 2000 chunks taken from a 1000 page biology book: -
 
 biology book link - https://www.kaggle.com/datasets/rohanthoma/ebook-pdfs
 
+Parsing Kaggle Notebook - https://www.kaggle.com/code/divitchoudhary/notebook921687e7d5 
+
 ## Features
 
 - Chat interface for student questions.
