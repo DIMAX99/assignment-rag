@@ -19,6 +19,8 @@ export default function Home() {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>('');
   const [loading, setLoading] = useState(false);
+  const [retrievedContext, setRetrievedContext] = useState<string>('');
+  const [selectedChunk, setSelectedChunk] = useState<{index: number; content: string} | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -62,6 +64,7 @@ export default function Home() {
     setInput('');
     removeImage();
     setLoading(true);
+    setRetrievedContext('');
 
     try {
       let imageUrl = null;
@@ -75,15 +78,19 @@ export default function Home() {
 
       const answer = response.data.answer;
       const usedWebSearch = response.data.used_web_fallback;
+      const context = response.data.retrieved_context || '';
       const messageText = usedWebSearch 
         ? `${answer}\n\n📡 Used WebSearch` 
         : answer;
+
+      setRetrievedContext(context);
 
       const botMessage: Message = {
         id: (Date.now() + 1).toString(),
         text: messageText,
         sender: 'bot',
         timestamp: new Date(),
+
       };
       setLoading(false);
       setMessages((prev) => [...prev, botMessage]);
@@ -106,120 +113,197 @@ export default function Home() {
       </div>
 
       {/* Chat Container */}
-      <div className="flex-1 flex flex-col max-w-5xl w-full mx-auto bg-white overflow-hidden">
-        {/* Messages Area */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
-          {messages.length === 0 && (
-            <div className="h-full flex items-center justify-center">
-              <div className="text-center space-y-3">
-                <div className="text-4xl">📚</div>
-                <p className="text-lg font-medium text-slate-900">Start a conversation</p>
-                <p className="text-slate-500 text-sm">Ask questions about your textbook or upload an image</p>
-              </div>
-            </div>
-          )}
-
-          {messages.map((message) => (
-            <div
-              key={message.id}
-              className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'} animate-fadeIn`}
-            >
-              <div
-                className={`max-w-2xl rounded-2xl px-5 py-3.5 space-y-2 ${
-                  message.sender === 'user'
-                    ? 'bg-slate-900 text-white rounded-br-sm'
-                    : 'bg-slate-100 text-slate-900 rounded-bl-sm border border-slate-200/50'
-                }`}
-              >
-                {message.image && (
-                  <div className="mb-2 rounded-lg overflow-hidden border border-slate-200">
-                    <img
-                      src={message.image}
-                      alt="User uploaded"
-                      className="max-w-sm max-h-48 object-cover"
-                    />
-                  </div>
-                )}
-                <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.text}</p>
-                <span className={`text-xs opacity-60 block ${message.sender === 'user' ? 'text-slate-300' : 'text-slate-500'}`}>
-                  {message.timestamp.toLocaleTimeString([], {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
-                </span>
-              </div>
-            </div>
-          ))}
-
-          {loading && (
-            <div className="flex justify-start">
-              <div className="bg-slate-100 text-slate-900 rounded-2xl rounded-bl-sm p-4 border border-slate-200/50">
-                <div className="flex gap-2">
-                  <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce"></div>
-                  <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                  <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+      <div className="flex-1 flex bg-white overflow-hidden px-6 py-6 gap-4">
+        {/* Messages Section - 60% */}
+        <div className="flex-[0.6] flex flex-col border border-slate-200/50 rounded-xl overflow-hidden">
+          {/* Messages Area */}
+          <div className="flex-1 overflow-y-auto p-6 space-y-6">
+            {messages.length === 0 && (
+              <div className="h-full flex items-center justify-center">
+                <div className="text-center space-y-3">
+                  <div className="text-4xl">📚</div>
+                  <p className="text-lg font-medium text-slate-900">Start a conversation</p>
+                  <p className="text-slate-500 text-sm">Ask questions about your textbook or upload an image</p>
                 </div>
               </div>
+            )}
+
+            {messages.map((message) => (
+              <div
+                key={message.id}
+                className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'} animate-fadeIn`}
+              >
+                <div
+                  className={`max-w-xl rounded-2xl px-5 py-3.5 space-y-2 ${
+                    message.sender === 'user'
+                      ? 'bg-slate-900 text-white rounded-br-sm'
+                      : 'bg-slate-100 text-slate-900 rounded-bl-sm border border-slate-200/50'
+                  }`}
+                >
+                  {message.image && (
+                    <div className="mb-2 rounded-lg overflow-hidden border border-slate-200">
+                      <img
+                        src={message.image}
+                        alt="User uploaded"
+                        className="max-w-sm max-h-48 object-cover"
+                      />
+                    </div>
+                  )}
+                  <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.text}</p>
+                  <span className={`text-xs opacity-60 block ${message.sender === 'user' ? 'text-slate-300' : 'text-slate-500'}`}>
+                    {message.timestamp.toLocaleTimeString([], {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </span>
+                </div>
+              </div>
+            ))}
+
+            {loading && (
+              <div className="flex justify-start">
+                <div className="bg-slate-100 text-slate-900 rounded-2xl rounded-bl-sm p-4 border border-slate-200/50">
+                  <div className="flex gap-2">
+                    <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce"></div>
+                    <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                    <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div ref={messagesEndRef} />
+          </div>
+
+          {/* Image Preview */}
+          {imagePreview && (
+            <div className="px-6 pb-4 border-t border-slate-200/50">
+              <div className="relative inline-block group">
+                <img
+                  src={imagePreview}
+                  alt="Selected"
+                  className="max-w-xs max-h-32 rounded-lg border border-slate-200 hover:border-slate-300 transition-colors"
+                />
+                <button
+                  onClick={removeImage}
+                  className="absolute -top-2 -right-2 bg-slate-900 hover:bg-slate-800 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold transition-colors shadow-md"
+                  title="Remove image"
+                >
+                  ×
+                </button>
+              </div>
             </div>
           )}
 
-          <div ref={messagesEndRef} />
-        </div>
-
-        {/* Image Preview */}
-        {imagePreview && (
-          <div className="px-6 pb-4 border-t border-slate-200/50">
-            <div className="relative inline-block group">
-              <img
-                src={imagePreview}
-                alt="Selected"
-                className="max-w-xs max-h-32 rounded-lg border border-slate-200 hover:border-slate-300 transition-colors"
+          {/* Input Area */}
+          <div className="border-t border-slate-200/50 p-4 bg-white">
+            <div className="flex gap-3 items-end">
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors flex items-center gap-2 font-medium text-sm"
+                title="Attach image"
+              >
+                📎
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleImageSelect}
+                className="hidden"
+              />
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                placeholder="Type your question..."
+                className="flex-1 px-4 py-2.5 border border-slate-200 text-slate-900 placeholder-slate-400 rounded-lg focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-colors bg-white"
               />
               <button
-                onClick={removeImage}
-                className="absolute -top-2 -right-2 bg-slate-900 hover:bg-slate-800 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold transition-colors shadow-md"
-                title="Remove image"
+                onClick={handleSendMessage}
+                disabled={!input.trim() && !selectedImage}
+                className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded-lg transition-colors font-medium text-sm"
               >
-                ×
+                Send
               </button>
             </div>
           </div>
-        )}
+        </div>
 
-        {/* Input Area */}
-        <div className="border-t border-slate-200/50 p-4 bg-white">
-          <div className="flex gap-3 items-end">
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors flex items-center gap-2 font-medium text-sm"
-              title="Attach image"
-            >
-              📎
-            </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleImageSelect}
-              className="hidden"
-            />
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-              placeholder="Type your question..."
-              className="flex-1 px-4 py-2.5 border border-slate-200 text-slate-900 placeholder-slate-400 rounded-lg focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-colors bg-white"
-            />
-            <button
-              onClick={handleSendMessage}
-              disabled={!input.trim() && !selectedImage}
-              className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded-lg transition-colors font-medium text-sm"
-            >
-              Send
-            </button>
+        {/* Retrieved Context Sidebar - 40% */}
+        <div className="flex-[0.4] flex flex-col border border-slate-200/50 rounded-xl overflow-hidden bg-slate-50">
+          <div className="px-4 py-3 border-b border-slate-200/50 bg-white">
+            <h2 className="text-sm font-semibold text-slate-900">Retrieved Context</h2>
+            <p className="text-xs text-slate-500 mt-0.5">From textbook sources</p>
+          </div>
+          <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            {retrievedContext ? (
+              <div className="space-y-3">
+                {retrievedContext.split('Source').slice(1).map((source, idx) => (
+                  <div
+                    key={idx}
+                    onClick={() => setSelectedChunk({index: idx + 1, content: source})}
+                    className="bg-white rounded-lg p-3 border border-slate-200/50 text-xs cursor-pointer hover:border-slate-300 hover:shadow-md transition-all group"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="font-semibold text-slate-900 flex-shrink-0">Source {idx + 1}</div>
+                      <div className="text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">→</div>
+                    </div>
+                    <div className="text-slate-600 line-clamp-3 mt-1">{source.trim().substring(0, 150)}...</div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-full text-slate-400">
+                <div className="text-center">
+                  <p className="text-sm">No context retrieved yet</p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
+
+        {/* Chunk Popup Modal */}
+        {selectedChunk && (
+          <div
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+            onClick={() => setSelectedChunk(null)}
+          >
+            <div
+              className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden flex flex-col"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Modal Header */}
+              <div className="px-6 py-4 border-b border-slate-200/50 flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-slate-900">Source {selectedChunk.index}</h3>
+                <button
+                  onClick={() => setSelectedChunk(null)}
+                  className="text-slate-500 hover:text-slate-700 transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Modal Content */}
+              <div className="flex-1 overflow-y-auto p-6">
+                <div className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">
+                  {selectedChunk.content}
+                </div>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="px-6 py-4 border-t border-slate-200/50 bg-slate-50 flex justify-end">
+                <button
+                  onClick={() => setSelectedChunk(null)}
+                  className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg transition-colors text-sm font-medium"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

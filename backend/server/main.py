@@ -54,5 +54,6 @@ async def chat(req: ChatRequest):
     })
     return {
     "answer": result["final_answer"],
-    "used_web_fallback": result.get("used_web_fallback", False)
+    "used_web_fallback": result.get("used_web_fallback", False),
+    "retrieved_context": result.get("retrieved_context", None)
     }
