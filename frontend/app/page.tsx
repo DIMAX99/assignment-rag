@@ -18,6 +18,7 @@ export default function Home() {
   const [input, setInput] = useState('');
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>('');
+  const [webSearchResults, setWebSearchResults] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [retrievedContext, setRetrievedContext] = useState<string>('');
   const [selectedChunk, setSelectedChunk] = useState<{index: number; content: string} | null>(null);
@@ -79,12 +80,13 @@ export default function Home() {
       const answer = response.data.answer;
       const usedWebSearch = response.data.used_web_fallback;
       const context = response.data.retrieved_context || '';
+      const webSearchResults = response.data.web_search_results || '';
       const messageText = usedWebSearch 
         ? `${answer}\n\n📡 Used WebSearch` 
         : answer;
 
       setRetrievedContext(context);
-
+      setWebSearchResults(webSearchResults);
       const botMessage: Message = {
         id: (Date.now() + 1).toString(),
         text: messageText,
@@ -238,21 +240,44 @@ export default function Home() {
             <p className="text-xs text-slate-500 mt-0.5">From textbook sources</p>
           </div>
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
-            {retrievedContext ? (
+            {retrievedContext || webSearchResults ? (
               <div className="space-y-3">
-                {retrievedContext.split('Source').slice(1).map((source, idx) => (
+                {retrievedContext && retrievedContext.split('Source').slice(1).map((source, idx) => (
                   <div
-                    key={idx}
+                    key={`textbook-${idx}`}
                     onClick={() => setSelectedChunk({index: idx + 1, content: source})}
                     className="bg-white rounded-lg p-3 border border-slate-200/50 text-xs cursor-pointer hover:border-slate-300 hover:shadow-md transition-all group"
                   >
-                    <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-start justify-between gap-2 mb-1">
                       <div className="font-semibold text-slate-900 flex-shrink-0">Source {idx + 1}</div>
                       <div className="text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">→</div>
                     </div>
-                    <div className="text-slate-600 line-clamp-3 mt-1">{source.trim().substring(0, 150)}...</div>
+                    <div className="text-slate-600 line-clamp-3">{source.trim().substring(0, 150)}...</div>
                   </div>
                 ))}
+                
+                {webSearchResults && (
+                  <>
+                    <div className="px-2 py-1 mt-4">
+                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Web Results</p>
+                    </div>
+                    {webSearchResults.split('\n\n').filter((result) => result.trim()).map((result, idx) => (
+                      <div
+                        key={`web-${idx}`}
+                        onClick={() => setSelectedChunk({index: -1, content: result})}
+                        className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-3 border border-blue-200/50 text-xs cursor-pointer hover:border-blue-300 hover:shadow-md transition-all group"
+                      >
+                        <div className="flex items-start justify-between gap-2 mb-1">
+                          <div className="font-semibold text-blue-900 flex-shrink-0 flex items-center gap-1">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">Web</span>
+                          </div>
+                          <div className="text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">→</div>
+                        </div>
+                        <div className="text-blue-900 line-clamp-3">{result.trim().substring(0, 150)}...</div>
+                      </div>
+                    ))}
+                  </>
+                )}
               </div>
             ) : (
               <div className="flex items-center justify-center h-full text-slate-400">
@@ -276,7 +301,14 @@ export default function Home() {
             >
               {/* Modal Header */}
               <div className="px-6 py-4 border-b border-slate-200/50 flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-slate-900">Source {selectedChunk.index}</h3>
+                <div className="flex items-center gap-3">
+                  <h3 className="text-lg font-semibold text-slate-900">
+                    {selectedChunk.index === -1 ? 'Web Result' : `Source ${selectedChunk.index}`}
+                  </h3>
+                  {selectedChunk.index === -1 && (
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">Web</span>
+                  )}
+                </div>
                 <button
                   onClick={() => setSelectedChunk(null)}
                   className="text-slate-500 hover:text-slate-700 transition-colors"

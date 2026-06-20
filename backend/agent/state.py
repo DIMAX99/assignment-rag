@@ -1,21 +1,27 @@
 from typing import Optional
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, Field
 
 
 class AgentState(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
+    # ── Input ──────────────────────────────────────────────────────────────
+    question:   str            = Field(..., description="Raw user question")
+    image_url:  Optional[str]  = Field(None, description="Optional image URL")
 
-    session_id: Optional[str] = None
+    # ── Gate ───────────────────────────────────────────────────────────────
+    gate_decision: Optional[str] = Field(None, description='"allow" or "block"')
+    gate_reason:   Optional[str] = Field(None, description="One-line explanation from gate LLM")
 
-    question: str
+    # ── Image ──────────────────────────────────────────────────────────────
+    image_summary: Optional[str] = Field(None, description="Visual analysis of the uploaded image")
 
-    image_url: Optional[str] = None
-    image_path: Optional[str] = None
+    # ── Retrieval ──────────────────────────────────────────────────────────
+    search_query:      Optional[str]  = Field(None, description="Refined query sent to the vector store")
+    retrieved_context: Optional[str]  = Field(None, description="Textbook chunks (and optionally web results)")
+    low_similarity:    bool           = Field(False, description="True when retrieved chunks scored below threshold")
 
-    image_summary: Optional[str] = None
+    # ── Web search ─────────────────────────────────────────────────────────
+    used_web_fallback:  bool           = Field(False, description="Whether web search was triggered")
+    web_search_results: Optional[str]  = Field(None, description="Raw Tavily results")
 
-    search_query: Optional[str] = None      # ✅ set by build_query_node
-    retrieved_context: Optional[str] = None  # ✅ set by retrieve_node
-
-    final_answer: Optional[str] = None
-    used_web_fallback: Optional[bool] = None
+    # ── Output ─────────────────────────────────────────────────────────────
+    final_answer: Optional[str] = Field(None, description="Final answer shown to the student")
