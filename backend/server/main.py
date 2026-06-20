@@ -52,4 +52,7 @@ async def chat(req: ChatRequest):
         "question": req.message,
         "image_url": req.image_url
     })
-    return result["final_answer"]
+    return {
+    "answer": result["final_answer"],
+    "used_web_fallback": result.get("used_web_fallback", False)
+    }

@@ -18,3 +18,4 @@ class AgentState(BaseModel):
     retrieved_context: Optional[str] = None  # ✅ set by retrieve_node
 
     final_answer: Optional[str] = None
+    used_web_fallback: Optional[bool] = None
