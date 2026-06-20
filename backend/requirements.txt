@@ -8,7 +8,7 @@ langchain
 langchain-core
 langchain-google-genai
 langchain-postgres
-langchain-huggingface
+
 langchain-text-splitters
 
 # LangGraph
@@ -19,7 +19,6 @@ psycopg2-binary
 sqlalchemy
 
 # Document Processing
-docling
 markdownify
 
 # HTTP and External APIs
