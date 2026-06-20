@@ -10,6 +10,13 @@ Add the application output screenshot here after saving it in the repository, fo
 
 <img width="1913" height="958" alt="Screenshot 2026-06-20 195913" src="https://github.com/user-attachments/assets/5c374b92-77e2-4883-aae7-97f72acc3dbc" />
 
+FOR TESTING U CAN USE IMAGE OR ALREADY EXTRACTED IMAGES FROM HERE - https://drive.google.com/drive/folders/1fmK0ze2HkNwiixYtCB2yKSdZP6flIcSd?usp=sharing
+
+DATABASE VIEW containing 2000 chunks taken from a 1000 page biology book: -
+
+<img width="1608" height="828" alt="image" src="https://github.com/user-attachments/assets/9e11a166-27f2-48fa-ae5e-7045a23d3623" />
+
+biology book link - https://www.kaggle.com/datasets/rohanthoma/ebook-pdfs
 
 ## Features
 
